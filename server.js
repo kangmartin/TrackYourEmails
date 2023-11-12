@@ -38,7 +38,10 @@ app.post('/upload', upload.single('file'), (req, res) => {
 
     const trackingId = uuidv4();
     const imageName = file.filename;
-    const imageUrl = `${baseUrl}/image/${file.filename}/${trackingId}`;
+
+
+    const imageUrl = `${baseUrl}image/${file.filename}/${trackingId}`;
+
 
     let trackingData = [];
     if (fs.existsSync(trackingDataPath)) {
