@@ -44,7 +44,7 @@ app.post('/upload', upload.single('file'), (req, res) => {
     const imageName = file.filename;
 
 
-    const imageUrl = `${baseUrl}/image/${file.filename}/${trackingId}`;
+    const imageUrl = `${baseUrl}image/${file.filename}/${trackingId}`;
 
 
     let trackingData = [];
