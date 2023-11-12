@@ -1,5 +1,5 @@
 
-# Image and Pixel Tracking Project
+# Track Your Emails
 
 This project enables users to track access to specific images and generate tracking pixels. It features an administrative interface for viewing tracking data.
 
