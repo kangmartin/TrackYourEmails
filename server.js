@@ -3,8 +3,9 @@ const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000; 
 const dataFile = 'trackData.json';
+const host = process.env.HOST || 'http://localhost';
 
 app.use(express.static('public'));
 app.use(express.json());
@@ -72,6 +73,11 @@ app.get('/get-tracking-data/:id', (req, res) => {
   res.send(data[id] || []);
 });
 
+app.get('/config.js', (req, res) => {
+  res.type('text/javascript');
+  res.send(`const host = "${process.env.HOST || 'http://localhost:3000'}";`);
+});
+
 app.listen(port, () => {
-  console.log(`Serveur lancé sur http://localhost:${port}`);
+  console.log(`Serveur lancé sur ${host}:${port}`);
 });

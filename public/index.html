@@ -74,6 +74,7 @@
         <textarea id="imgTag" rows="4" readonly></textarea>
         <p><a href="history.html">Suivre un Pixel</a></p>
     </div>
+    <script src="/config.js"></script>
     <script>
         document.getElementById('generateBtn').addEventListener('click', function() {
             fetch('/generate-pixel')
@@ -81,7 +82,7 @@
                 .then(data => {
                     const id = data.id;
                     document.getElementById('pixelId').textContent = id;
-                    const imgTag = `<img src="http://localhost:3000/track/${id}" alt="" style="display:none;">`;
+                    const imgTag = `<img src="${host}/track/${id}" alt="" style="display:none;">`;
                     document.getElementById('imgTag').textContent = imgTag;
                 });
         });
