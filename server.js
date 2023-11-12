@@ -63,6 +63,7 @@ app.get('/image/:imageName/:trackingId', (req, res) => {
     const trackingId = req.params.trackingId;
     const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress;
 
+    // Vérifier si l'adresse IP est définie et non 'undefined'
     if (ipAddress && ipAddress !== 'undefined') {
         let trackingData = [];
         if (fs.existsSync(trackingDataPath)) {
