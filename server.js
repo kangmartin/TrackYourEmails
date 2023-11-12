@@ -4,7 +4,7 @@ const path = require('path');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const app = express();
-const port = 3000;
+const port = 80;
 
 
 const trackingDataPath = path.join(__dirname, 'trackingData.json');
