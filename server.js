@@ -4,8 +4,8 @@ const path = require('path');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const app = express();
-const port = 3000;
-
+const port = process.env.PORT || 3000;
+const baseUrl = process.env.BASE_URL || `http://localhost:${port}`;
 
 const trackingDataPath = path.join(__dirname, 'trackingData.json');
 
@@ -44,7 +44,7 @@ app.post('/upload', upload.single('file'), (req, res) => {
     const imageName = file.filename;
 
 
-    const imageUrl = `http://localhost:${port}/image/${imageName}/${trackingId}`;
+    const imageUrl = `${baseUrl}/image/${file.filename}/${trackingId}`;
 
 
     let trackingData = [];
@@ -106,5 +106,5 @@ app.get('/tracking-data', (req, res) => {
 
 
 app.listen(port, () => {
-    console.log(`Serveur lancé sur http://localhost:${port}`);
+    console.log(`Serveur lancé sur le port ${port}`);
 });
