@@ -9,7 +9,6 @@ const baseUrl = process.env.BASE_URL || `http://localhost:${port}`;
 
 const trackingDataPath = path.join(__dirname, 'trackingData.json');
 
-
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, 'public/')
@@ -20,7 +19,6 @@ const storage = multer.diskStorage({
     }
 });
 
-
 const imageFilter = function (req, file, cb) {
     if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
         return cb(new Error('Only image files are allowed!'), false);
@@ -30,7 +28,6 @@ const imageFilter = function (req, file, cb) {
 
 const upload = multer({ storage: storage, fileFilter: imageFilter });
 
-
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.post('/upload', upload.single('file'), (req, res) => {
@@ -39,13 +36,9 @@ app.post('/upload', upload.single('file'), (req, res) => {
         return res.status(400).send({ success: false, message: 'No file uploaded' });
     }
 
-
     const trackingId = uuidv4();
     const imageName = file.filename;
-
-
     const imageUrl = `${baseUrl}/image/${file.filename}/${trackingId}`;
-
 
     let trackingData = [];
     if (fs.existsSync(trackingDataPath)) {
@@ -59,7 +52,6 @@ app.post('/upload', upload.single('file'), (req, res) => {
     });
     fs.writeFileSync(trackingDataPath, JSON.stringify(trackingData, null, 2));
 
-
     res.send({ success: true, imageUrl, htmlCode: `<img src="${imageUrl}" alt="Followed image" />` });
 });
 
@@ -68,22 +60,21 @@ app.get('/image/:imageName/:trackingId', (req, res) => {
     const trackingId = req.params.trackingId;
     const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress;
 
+    if (ipAddress && ipAddress !== 'undefined') {
+        let trackingData = [];
+        if (fs.existsSync(trackingDataPath)) {
+            trackingData = JSON.parse(fs.readFileSync(trackingDataPath));
+        }
 
-    let trackingData = [];
-    if (fs.existsSync(trackingDataPath)) {
-        trackingData = JSON.parse(fs.readFileSync(trackingDataPath));
+        trackingData.push({
+            imageName,
+            trackingId,
+            ipAddress,
+            timestamp: new Date().toISOString()
+        });
+
+        fs.writeFileSync(trackingDataPath, JSON.stringify(trackingData, null, 2));
     }
-
-
-    trackingData.push({
-        imageName,
-        trackingId,
-        ipAddress,
-        timestamp: new Date().toISOString()
-    });
-
-    fs.writeFileSync(trackingDataPath, JSON.stringify(trackingData, null, 2));
-
 
     const imagePath = path.join(__dirname, 'public', imageName);
     if (fs.existsSync(imagePath)) {
@@ -93,8 +84,6 @@ app.get('/image/:imageName/:trackingId', (req, res) => {
     }
 });
 
-
-
 app.get('/tracking-data', (req, res) => {
     if (fs.existsSync(trackingDataPath)) {
         const trackingData = JSON.parse(fs.readFileSync(trackingDataPath));
@@ -103,7 +92,6 @@ app.get('/tracking-data', (req, res) => {
         res.json([]);
     }
 });
-
 
 app.listen(port, () => {
     console.log(`Serveur lancé sur le port ${port}`);
