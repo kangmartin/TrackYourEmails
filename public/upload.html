@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload et Suivi d'Image</title>
+    <title>Upload</title>
     <style>
-        /* Ajoutez votre CSS ici pour un design moderne */
+
         .drop-zone {
             border: 2px dashed #0087F7;
             border-radius: 5px;
@@ -20,9 +20,9 @@
     </style>
 </head>
 <body>
-    <div class="drop-zone" id="dropZone">Glissez-déposez votre image ici</div>
+    <div class="drop-zone" id="dropZone">Drag and drop your image here</div>
     <input type="file" id="fileInput" hidden>
-    <button id="uploadButton">Uploader</button>
+    <button id="uploadButton">Upload !</button>
     <div id="htmlCode" style="margin-top: 20px;"></div>
 
     <script>
@@ -47,7 +47,7 @@ dropZone.addEventListener('drop', (event) => {
     const files = event.dataTransfer.files;
     if (files.length) {
         uploadedFile = files[0];
-        dropZone.textContent = `Fichier prêt à être uploadé : ${uploadedFile.name}`;
+        dropZone.textContent = `File ready to upload : ${uploadedFile.name}`;
     }
 });
 
@@ -64,11 +64,11 @@ uploadButton.addEventListener('click', () => {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                document.getElementById('htmlCode').innerText = `Code HTML : ${data.htmlCode}`;
+                document.getElementById('htmlCode').innerText = `HTML code : ${data.htmlCode}`;
             }
         });
     } else {
-        alert('Veuillez d\'abord sélectionner un fichier à uploader.');
+        alert('First select a file to upload.');
     }
 });
     </script>
