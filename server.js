@@ -1,113 +1,77 @@
 const express = require('express');
 const fs = require('fs');
-const path = require('path');
-const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
+
 const app = express();
-const port = process.env.PORT || 3000;
+const port = 3000;
+const dataFile = 'trackData.json';
 
-const baseUrl = process.env.BASE_URL || `http://localhost:${port}`;
+app.use(express.static('public'));
+app.use(express.json());
 
-// Chemin vers le fichier de données de suivi
-const trackingDataPath = path.join(__dirname, 'trackingData.json');
+// Fonction pour formater la date
+function formatDate(date) {
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${day}/${month}/${year} - ${hours}:${minutes}`;
+}
 
-// Configuration de Multer avec stockage personnalisé
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'public/')
-    },
-    filename: function (req, file, cb) {
-        const uniqueSuffix = uuidv4() + path.extname(file.originalname);
-        cb(null, uniqueSuffix);
-    }
+// Route pour générer un nouveau pixel
+app.get('/generate-pixel', (req, res) => {
+  const id = uuidv4();
+  res.send({ id });
 });
 
-// Filtre pour s'assurer que seules les images sont uploadées
-const imageFilter = function (req, file, cb) {
-    if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
-        return cb(new Error('Seuls les fichiers image sont autorisés!'), false);
-    }
-    cb(null, true);
-};
+// Route pour tracker les ouvertures de mail
+app.get('/track/:id', (req, res) => {
+  const pixelId = req.params.id;
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  const now = new Date();
 
-const upload = multer({ storage: storage, fileFilter: imageFilter });
+  const pixelData = {
+    date: formatDate(now),
+    ip,
+  };
 
-// Sert les fichiers statiques du dossier 'public'
-app.use(express.static(path.join(__dirname, 'public')));
+  let data = {};
+  if (fs.existsSync(dataFile)) {
+    data = JSON.parse(fs.readFileSync(dataFile));
+  }
+  if (!data[pixelId]) {
+    data[pixelId] = [];
+  }
+  data[pixelId].push(pixelData);
+  fs.writeFileSync(dataFile, JSON.stringify(data, null, 2)); // Format for readability
 
-// Route pour uploader un fichier
-app.post('/upload', upload.single('file'), (req, res) => {
-    const file = req.file;
-    if (!file) {
-        return res.status(400).send({ success: false, message: 'Pas de fichier uploadé' });
-    }
+  // Envoyer un pixel transparent
+  const pixel = Buffer.from([
+    0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x01, 0x00,
+    0x01, 0x00, 0x80, 0xff, 0x00, 0xff, 0xff, 0xff,
+    0x00, 0x00, 0x00, 0x2c, 0x00, 0x00, 0x00, 0x00,
+    0x01, 0x00, 0x01, 0x00, 0x00, 0x02, 0x02, 0x44,
+    0x01, 0x00, 0x3b
+  ]);
 
-    // Générer un identifiant unique pour l'image
-    const trackingId = uuidv4();
-    const imageName = file.filename;
-
-    // Construire l'URL pour l'image uploadée avec le trackingId
-    const imageUrl = `${baseUrl}/image/${file.filename}/${trackingId}`;
-
-    // Ajouter l'entrée de suivi dans le fichier de suivi
-    let trackingData = [];
-    if (fs.existsSync(trackingDataPath)) {
-        trackingData = JSON.parse(fs.readFileSync(trackingDataPath));
-    }
-    trackingData.push({
-        imageName,
-        trackingId,
-        imageUrl, // Ajout de l'URL de l'image
-        timestamp: new Date().toISOString()
-    });
-    fs.writeFileSync(trackingDataPath, JSON.stringify(trackingData, null, 2));
-
-    // Envoyer la réponse avec l'URL et le trackingId
-    res.send({ success: true, imageUrl, htmlCode: `<img src="${imageUrl}" alt="Image Suivie" />` });
+  res.writeHead(200, {
+    'Content-Type': 'image/gif',
+    'Content-Length': pixel.length,
+  });
+  res.end(pixel);
 });
 
-// Route pour servir l'image et enregistrer les données de suivi
-app.get('/image/:imageName/:trackingId', (req, res) => {
-    const imageName = req.params.imageName;
-    const trackingId = req.params.trackingId;
-    const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress;
-
-    // Lecture des données de suivi existantes
-    let trackingData = [];
-    if (fs.existsSync(trackingDataPath)) {
-        trackingData = JSON.parse(fs.readFileSync(trackingDataPath));
-    }
-
-    // Trouver l'entrée correspondante dans trackingData.json et mettre à jour l'adresse IP
-    const imageEntryIndex = trackingData.findIndex(entry => entry.trackingId === trackingId && entry.imageName === imageName);
-    
-    if (imageEntryIndex !== -1) {
-        trackingData[imageEntryIndex].ipAddress = ipAddress;
-        trackingData[imageEntryIndex].timestamp = new Date().toISOString();
-        fs.writeFileSync(trackingDataPath, JSON.stringify(trackingData, null, 2));
-
-        const imagePath = path.join(__dirname, 'public', trackingData[imageEntryIndex].imageName);
-        if (fs.existsSync(imagePath)) {
-            res.sendFile(imagePath);
-        } else {
-            res.status(404).send('Image non trouvée');
-        }
-    } else {
-        res.status(404).send('Données de suivi non trouvées');
-    }
+// Route pour obtenir les données de suivi
+app.get('/get-tracking-data/:id', (req, res) => {
+  const id = req.params.id;
+  let data = {};
+  if (fs.existsSync(dataFile)) {
+    data = JSON.parse(fs.readFileSync(dataFile));
+  }
+  res.send(data[id] || []);
 });
 
-// Route pour afficher les données de suivi
-app.get('/tracking-data', (req, res) => {
-    if (fs.existsSync(trackingDataPath)) {
-        const trackingData = JSON.parse(fs.readFileSync(trackingDataPath));
-        res.json(trackingData);
-    } else {
-        res.json([]);
-    }
-});
-
-// Démarrage du serveur
 app.listen(port, () => {
-    console.log(`Serveur lancé sur http://localhost:${port}`);
+  console.log(`Serveur lancé sur http://localhost:${port}`);
 });

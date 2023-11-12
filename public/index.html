@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Générer Pixel Tracking</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #ececec;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .generate-container {
+            background-color: #ececec;
+            border-radius: 10px;
+            box-shadow: 8px 8px 15px #a3a3a3, -8px -8px 15px #ffffff;
+            padding: 20px;
+            width: 60%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        button {
+            border: none;
+            background-color: #ececec;
+            border-radius: 10px;
+            box-shadow: 8px 8px 15px #a3a3a3, -8px -8px 15px #ffffff;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #dcdcdc;
+        }
+
+        textarea {
+            border: none;
+            background-color: #ececec;
+            border-radius: 10px;
+            box-shadow: inset 8px 8px 15px #a3a3a3, inset -8px -8px 15px #ffffff;
+            padding: 10px;
+            margin-top: 10px;
+            width: 100%;
+            resize: none;
+        }
+
+        a {
+            display: inline-block;
+            text-decoration: none;
+            color: #333;
+            background-color: #ececec;
+            border-radius: 10px;
+            box-shadow: 8px 8px 15px #a3a3a3, -8px -8px 15px #ffffff;
+            padding: 10px 20px;
+            margin: 10px 0;
+        }
+
+        a:hover {
+            background-color: #dcdcdc;
+        }
+    </style>
+</head>
+<body>
+    <div class="generate-container">
+        <button id="generateBtn">Générer Pixel Tracking</button>
+        <p>ID Pixel: <span id="pixelId"></span></p>
+        <p>Balise IMG à insérer dans l'e-mail:</p>
+        <textarea id="imgTag" rows="4" readonly></textarea>
+        <p><a href="history.html">Suivre un Pixel</a></p>
+    </div>
+    <script>
+        document.getElementById('generateBtn').addEventListener('click', function() {
+            fetch('/generate-pixel')
+                .then(response => response.json())
+                .then(data => {
+                    const id = data.id;
+                    document.getElementById('pixelId').textContent = id;
+                    const imgTag = `<img src="http://localhost:3000/track/${id}" alt="" style="display:none;">`;
+                    document.getElementById('imgTag').textContent = imgTag;
+                });
+        });
+    </script>
+</body>
+</html>

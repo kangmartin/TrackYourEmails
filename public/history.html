@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Historique de Suivi</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #ececec;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .tracking-container {
+            background-color: #ececec;
+            border-radius: 10px;
+            box-shadow: 8px 8px 15px #a3a3a3, -8px -8px 15px #ffffff;
+            padding: 20px;
+            width: 60%;
+            max-width: 600px;
+        }
+
+        .tracking-step {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
+            padding: 15px;
+            margin: 10px 0;
+            text-align: left;
+        }
+
+        .tracking-header {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tracking-details {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .icon {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background-color: #4caf50;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            color: white;
+            margin-right: 10px;
+        }
+
+        input, button {
+            border: none;
+            background-color: #ececec;
+            border-radius: 10px;
+            box-shadow: inset 8px 8px 15px #a3a3a3, inset -8px -8px 15px #ffffff;
+            padding: 10px;
+            margin: 10px 0;
+        }
+
+        button {
+            box-shadow: 8px 8px 15px #a3a3a3, -8px -8px 15px #ffffff;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #dcdcdc;
+        }
+
+        a {
+            display: inline-block;
+            text-decoration: none;
+            color: #333;
+            background-color: #ececec;
+            border-radius: 10px;
+            box-shadow: 8px 8px 15px #a3a3a3, -8px -8px 15px #ffffff;
+            padding: 10px 20px;
+            margin: 10px 0;
+        }
+
+        a:hover {
+            background-color: #dcdcdc;
+        }
+    </style>
+</head>
+<body>
+    <div class="tracking-container">
+        <p><a href="index.html">Générer un nouveau Pixel</a></p>
+        <div class="tracking-form">
+            <input type="text" id="trackingId" placeholder="Entrez l'ID de suivi">
+            <button id="trackBtn">Voir Historique</button>
+        </div>
+        <div id="trackingContainer"></div>
+    </div>
+    <script>
+        document.getElementById('trackBtn').addEventListener('click', function() {
+            const id = document.getElementById('trackingId').value;
+            fetch('/get-tracking-data/' + id)
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('trackingContainer');
+                    container.innerHTML = ''; // Clear previous results
+
+                    if (data.length > 0) {
+                        addTrackingStep(container, '📤', 'E-mail envoyé', `Date: ${data[0].date}<br>IP: ${data[0].ip}`);
+                        if (data.length > 1) {
+                            addTrackingStep(container, '👀', `E-mail vu ${data.length - 1} fois`, data.slice(1).map(item => `Date: ${item.date}, IP: ${item.ip}`).join('<br>'));
+                        }
+                    }
+                });
+        });
+
+        function addTrackingStep(container, icon, title, details) {
+            const step = document.createElement('div');
+            step.className = 'tracking-step';
+
+            const header = document.createElement('div');
+            header.className = 'tracking-header';
+            header.innerHTML = `<span class="icon">${icon}</span><span>${title}</span>`;
+            step.appendChild(header);
+
+            const detailsDiv = document.createElement('div');
+            detailsDiv.className = 'tracking-details';
+            detailsDiv.innerHTML = details;
+            step.appendChild(detailsDiv);
+
+            container.appendChild(step);
+        }
+    </script>
+</body>
+</html>
