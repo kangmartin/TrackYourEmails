@@ -4,12 +4,12 @@ const path = require('path');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
+const baseUrl = process.env.BASE_URL || `http://localhost:${port}`;
 
-// Chemin vers le fichier de données de suivi
 const trackingDataPath = path.join(__dirname, 'trackingData.json');
 
-// Configuration de Multer avec stockage personnalisé
+
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, 'public/')
@@ -20,7 +20,7 @@ const storage = multer.diskStorage({
     }
 });
 
-// Filtre pour s'assurer que seules les images sont uploadées
+
 const imageFilter = function (req, file, cb) {
     if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
         return cb(new Error('Seuls les fichiers image sont autorisés!'), false);
@@ -30,7 +30,7 @@ const imageFilter = function (req, file, cb) {
 
 const upload = multer({ storage: storage, fileFilter: imageFilter });
 
-// Sert les fichiers statiques du dossier 'public'
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Route pour uploader un fichier
@@ -40,12 +40,13 @@ app.post('/upload', upload.single('file'), (req, res) => {
         return res.status(400).send({ success: false, message: 'Pas de fichier uploadé' });
     }
 
-    // Générer un identifiant unique pour l'image
+
     const trackingId = uuidv4();
     const imageName = file.filename;
 
-    // Construire l'URL pour l'image uploadée avec le trackingId
-    const imageUrl = `http://localhost:${port}/image/${imageName}/${trackingId}`;
+
+    const imageUrl = `${baseUrl}/image/${file.filename}/${trackingId}`;
+
 
     // Ajouter l'entrée de suivi dans le fichier de suivi
     let trackingData = [];
@@ -60,8 +61,8 @@ app.post('/upload', upload.single('file'), (req, res) => {
     });
     fs.writeFileSync(trackingDataPath, JSON.stringify(trackingData, null, 2));
 
-    // Envoyer la réponse avec l'URL et le trackingId
-    res.send({ success: true, imageUrl, htmlCode: `<img src="${imageUrl}" alt="Image Suivie" />` });
+
+    res.send({ success: true, imageUrl, htmlCode: `<img src="${imageUrl}" alt="Followed image" />` });
 });
 
 // Route pour servir l'image et enregistrer les données de suivi
@@ -70,32 +71,33 @@ app.get('/image/:imageName/:trackingId', (req, res) => {
     const trackingId = req.params.trackingId;
     const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress;
 
-    // Lecture des données de suivi existantes
+
     let trackingData = [];
     if (fs.existsSync(trackingDataPath)) {
         trackingData = JSON.parse(fs.readFileSync(trackingDataPath));
     }
 
-    // Trouver l'entrée correspondante dans trackingData.json et mettre à jour l'adresse IP
-    const imageEntryIndex = trackingData.findIndex(entry => entry.trackingId === trackingId && entry.imageName === imageName);
-    
-    if (imageEntryIndex !== -1) {
-        trackingData[imageEntryIndex].ipAddress = ipAddress;
-        trackingData[imageEntryIndex].timestamp = new Date().toISOString();
-        fs.writeFileSync(trackingDataPath, JSON.stringify(trackingData, null, 2));
 
-        const imagePath = path.join(__dirname, 'public', trackingData[imageEntryIndex].imageName);
-        if (fs.existsSync(imagePath)) {
-            res.sendFile(imagePath);
-        } else {
-            res.status(404).send('Image non trouvée');
-        }
+    trackingData.push({
+        imageName,
+        trackingId,
+        ipAddress,
+        timestamp: new Date().toISOString()
+    });
+
+    fs.writeFileSync(trackingDataPath, JSON.stringify(trackingData, null, 2));
+
+
+    const imagePath = path.join(__dirname, 'public', imageName);
+    if (fs.existsSync(imagePath)) {
+        res.sendFile(imagePath);
     } else {
         res.status(404).send('Données de suivi non trouvées');
     }
 });
 
-// Route pour afficher les données de suivi
+
+
 app.get('/tracking-data', (req, res) => {
     if (fs.existsSync(trackingDataPath)) {
         const trackingData = JSON.parse(fs.readFileSync(trackingDataPath));
@@ -105,7 +107,7 @@ app.get('/tracking-data', (req, res) => {
     }
 });
 
-// Démarrage du serveur
+
 app.listen(port, () => {
-    console.log(`Serveur lancé sur http://localhost:${port}`);
+    console.log(`Serveur lancé sur le port ${port}`);
 });
