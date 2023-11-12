@@ -112,7 +112,7 @@
                     container.innerHTML = ''; // Clear previous results
 
                     if (data.length > 0) {
-                        addTrackingStep(container, '📤', 'E-mail envoyé', `Date: ${data[0].date}<br>IP: ${data[0].ip}`);
+                        addTrackingStep(container, '📤', 'Pixel placé', `Date: ${data[0].date}<br>IP: ${data[0].ip}`);
                         if (data.length > 1) {
                             addTrackingStep(container, '👀', `E-mail vu ${data.length - 1} fois`, data.slice(1).map(item => `Date: ${item.date}, IP: ${item.ip}`).join('<br>'));
                         }
