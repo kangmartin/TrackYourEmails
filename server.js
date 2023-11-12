@@ -4,7 +4,7 @@ const path = require('path');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const app = express();
-const port = 80;
+const port = process.env.PORT || 3000;
 
 const baseUrl = process.env.BASE_URL || `http://localhost:${port}`;
 
